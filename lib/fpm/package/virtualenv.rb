@@ -46,6 +46,12 @@ class FPM::Package::Virtualenv < FPM::Package
     :multivalued => true, :attribute_name => :virtualenv_find_links_urls,
     :default => nil
 
+  option "--pip-upgrade", :flag, "Should we perform pip upgrade?",
+    :default => true
+
+  option "--requirement", :flag, "Indicate the included file is a "\
+    "requirements file"
+
   private
 
   # Input a package.
@@ -56,7 +62,8 @@ class FPM::Package::Virtualenv < FPM::Package
     m = /^([^=]+)==([^=]+)$/.match(package)
     package_version = nil
 
-    is_requirements_file = (File.basename(package) == "requirements.txt")
+    is_requirements_file = (File.basename(package) == "requirements.txt" or self.attributes[:virtualenv_requirement?])
+    logger.debug("Detecting requirements file", :is_requirements_file => is_requirements_file)
 
     if is_requirements_file
       if !File.file?(package)
@@ -108,10 +115,12 @@ class FPM::Package::Virtualenv < FPM::Package
     pip_exe = File.join(virtualenv_build_folder, "bin", "pip")
     python_exe = File.join(virtualenv_build_folder, "bin", "python")
 
-    # Why is this hack here? It looks important, so I'll keep it in.
-    safesystem(python_exe, pip_exe, "install", "-U", "-i",
-               attributes[:virtualenv_pypi],
-               "pip")
+    if self.attributes[:virtualenv_pip_upgrade?]
+        logger.info("Performing pip upgrade")
+        safesystem(python_exe, pip_exe, "install", "-U", "-i",
+                   attributes[:virtualenv_pypi],
+                   "pip")
+    end
 
     extra_index_url_args = []
     if attributes[:virtualenv_pypi_extra_index_urls]

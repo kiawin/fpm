@@ -10,18 +10,23 @@ single egg or from a `requirements.txt` file.  This lets you bundle up a set of
 python dependencies separate from system python that you can then distribute.
 
 .. note::
-   `virtualenv` support requires that you have `virtualenv` and  the
-   `virtualenv-tools` binary on your path.  This can usually be achieved with
+   `virtualenv` support requires that you have `virtualenv` and the
+   `virtualenv-tools` (or `virtualenv-tools3` if you using Python 3) binary on 
+   your path.  This can usually be achieved with
    `pip install virtualenv virtualenv-tools`.
 
 Example uses:
 =============
 
-Build an rpm package for ansible::
+Build a rpm package for ansible::
 
   fpm -s virtualenv -t rpm ansible
   yum install virtualenv-ansible*.rpm
   which ansible # /usr/share/python/ansible/bin/ansible
+
+Build a rpm package for ansible without upgrading pip::
+
+  fpm -s virtualenv -t rpm --no-virtualenv-pip-upgrade ansible
 
 Create a debian package for your project's python dependencies under `/opt`::
 
@@ -31,9 +36,19 @@ Create a debian package for your project's python dependencies under `/opt`::
   fpm -s virtualenv -t deb --name myapp-python-libs \
     --prefix /opt/myapp/virtualenv requirements.txt
 
+If your requirements file is not name after `requirements.txt`,
+
+  echo 'glade' >> example-requirements.txt
+  echo 'paramiko' >> example-requirements.txt
+  echo 'SQLAlchemy' >> example-requirements.txt
+  fpm -s virtualenv -t deb --name myapp-python-libs \
+    --prefix /opt/myapp/virtualenv \
+    --virtualenv-requirement example-requirements.txt
+
 Create a debian package from a version 0.9 of an egg kept in your internal
 pypi repository, along with it's external dependencies::
 
   fpm -s virtualenv -t deb \
     --virtualenv-pypi-extra-url=https://office-pypi.lan/ \
     proprietary-magic=0.9
+
