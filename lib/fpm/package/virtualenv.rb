@@ -52,6 +52,10 @@ class FPM::Package::Virtualenv < FPM::Package
   option "--requirement", :flag, "Indicate the included file is a "\
     "requirements file"
 
+  option "--python", "PYTHON", "Set custom python interpreter to be used in"\
+    "virtualenv",
+    :default => nil
+
   private
 
   # Input a package.
@@ -105,12 +109,20 @@ class FPM::Package::Virtualenv < FPM::Package
 
     ::FileUtils.mkdir_p(virtualenv_build_folder)
 
+    
+    venv_args = Array.new
+    venv_args << "virtualenv"
     if self.attributes[:virtualenv_system_site_packages?]
-        logger.info("Creating virtualenv with --system-site-packages")
-        safesystem("virtualenv", "--system-site-packages", virtualenv_build_folder)
-    else
-        safesystem("virtualenv", virtualenv_build_folder)
+      logger.info("Creating virtualenv with --system-site-packages")
+      venv_args << "--system-site-packages"
     end
+    if self.attributes[:virtualenv_python]
+      logger.info("Creating virtualenv with --python")
+      venv_args << "-p" << self.attributes[:virtualenv_python]
+    end
+    venv_args << virtualenv_build_folder
+
+    safesystem(*venv_args.flatten)
 
     pip_exe = File.join(virtualenv_build_folder, "bin", "pip")
     python_exe = File.join(virtualenv_build_folder, "bin", "python")
